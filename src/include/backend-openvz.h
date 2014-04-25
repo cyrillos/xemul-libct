@@ -1,0 +1,4 @@
+#ifndef __LIBCT_BACKEND_OPENVZ_H__
+#define __LIBCT_BACKEND_OPENVZ_H__
+
+#endif /* __LIBCT_BACKEND_OPENVZ_H__ */
