@@ -15,6 +15,8 @@ obj-y			+= libnetlink.o
 obj-y			+= pb-unix.o
 obj-y			+= rpc.o
 
+obj-y			+= backend-openvz.o
+
 #
 # We need protobuf
 obj-e			+= $(filter-out src/protobuf/built-in.o,$(shell ls src/protobuf/*.o))
