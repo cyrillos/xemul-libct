@@ -1,12 +1,14 @@
 #include <stdio.h>
 
 #include "compiler.h"
+
+#include "uapi/libct.h"
+
 #include "session.h"
 #include "libct.h"
 
 #include "backend-openvz.h"
 
-#include "uapi/libct.h"
 
 typedef struct {
 	struct libct_session	s;
@@ -29,7 +31,7 @@ static void vz_ct_close(libct_session_t s)
 static const struct backend_ops vz_session_ops = {
 	.type		= BACKEND_VZ,
 	.create_ct	= vz_ct_create,
-	.open		= vz_ct_open,
+	.open_ct	= vz_ct_open,
 	.close		= vz_ct_close,
 };
 
