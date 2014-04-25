@@ -1,6 +1,7 @@
 #ifndef __LIBCT_BACKEND_OPENVZ_H__
 #define __LIBCT_BACKEND_OPENVZ_H__
 
+#include <sys/ioctl.h>
 #include "types.h"
 
 #define VE_CREATE		 1	/* Create VE, VE_ENTER added automatically */
