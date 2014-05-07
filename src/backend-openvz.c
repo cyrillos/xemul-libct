@@ -44,20 +44,14 @@ static ct_handler_t vz_ct_create(libct_session_t s, char *name)
 {
 	vz_container_t *vz;
 
-	vz = xzalloc(sizeof(*vz));
-	if (vz) {
-		ct_handler_init(&vz->ct.h);
-		vz->ct.h.ops	= &vz_ct_ops;
-		vz->ct.state	= CT_STOPPED;
-		vz->ct.name	= xstrdup(name);
-
-		INIT_LIST_HEAD(&vz->ct.cgroups);
-		INIT_LIST_HEAD(&vz->ct.cg_configs);
-		INIT_LIST_HEAD(&vz->ct.ct_nets);
-		INIT_LIST_HEAD(&vz->ct.fs_mnts);
-
+	vz = xmalloc(sizeof(*vz));
+	if (vz && ct_init(&vz->ct, name)) {
+		vz->ct.h.ops = &vz_ct_ops;
 		return &vz->ct.h;
 	}
+
+	xfree(vz);
+	return NULL;
 }
 
 static ct_handler_t vz_ct_open(libct_session_t s, char *name)
