@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <errno.h>
 
 #include <sys/wait.h>
 #include <sys/mount.h>
@@ -548,21 +549,35 @@ static const struct container_ops local_ct_ops = {
 	.set_caps		= local_set_caps,
 };
 
+int ct_init(struct container *ct, char *name)
+{
+	if (!name || !ct)
+		return -EINVAL;
+
+	memset(ct, 0x0, sizeof(*ct));
+	ct_handler_init(&ct->h);
+
+	ct->state = CT_STOPPED;
+	ct->name = xstrdup(name);
+	INIT_LIST_HEAD(&ct->cgroups);
+	INIT_LIST_HEAD(&ct->cg_configs);
+	INIT_LIST_HEAD(&ct->ct_nets);
+	INIT_LIST_HEAD(&ct->fs_mnts);
+
+	return ct->name ? 0 : -ENOMEM;
+}
+
 ct_handler_t ct_create(char *name)
 {
 	struct container *ct;
 
-	ct = xzalloc(sizeof(*ct));
+	ct = xmalloc(sizeof(*ct));
 	if (ct) {
-		ct_handler_init(&ct->h);
+		if (ct_init(ct, name)) {
+			xfree(ct);
+			return NULL;
+		}
 		ct->h.ops = &local_ct_ops;
-		ct->state = CT_STOPPED;
-		ct->name = xstrdup(name);
-		INIT_LIST_HEAD(&ct->cgroups);
-		INIT_LIST_HEAD(&ct->cg_configs);
-		INIT_LIST_HEAD(&ct->ct_nets);
-		INIT_LIST_HEAD(&ct->fs_mnts);
-
 		return &ct->h;
 	}
 
