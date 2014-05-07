@@ -40,6 +40,7 @@ struct ct_handler {
 };
 
 ct_handler_t ct_create(char *name);
+int ct_init(struct container *ct, char *name);
 
 #define CT_AUTO_PROC		0x1
 #define CT_KILLABLE		0x2
