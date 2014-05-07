@@ -16,6 +16,20 @@ typedef struct {
 	void			*private;
 } vz_container_t;
 
+static vz_container_t *cth2vz(ct_handler_t h)
+{
+	struct container *ct = container_of(h, struct container, h);
+	return container_of(ct, vz_container_t, ct);
+}
+
+static void vz_ct_destroy(ct_handler_t h)
+{
+	vz_container_t *vz = cth2vz(h);
+
+	xfree(vz->ct.name);
+	xfree(vz);
+}
+
 static const struct container_ops vz_ct_ops = {
 	.spawn_cb		= NULL,
 	.spawn_execve		= NULL,
@@ -32,7 +46,7 @@ static const struct container_ops vz_ct_ops = {
 	.fs_add_mount		= NULL,
 	.fs_del_mount		= NULL,
 	.set_option		= NULL,
-	.destroy		= NULL,
+	.destroy		= vz_ct_destroy,
 	.detach			= NULL,
 	.net_add		= NULL,
 	.net_del		= NULL,
