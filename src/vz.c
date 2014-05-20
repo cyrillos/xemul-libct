@@ -49,10 +49,10 @@ static const struct container_ops vz_ct_ops = {
 	.set_nsmask		= NULL,
 	.add_controller		= NULL,
 	.config_controller	= NULL,
-	.fs_set_root		= NULL,
-	.fs_set_private		= NULL,
-	.fs_add_mount		= NULL,
-	.fs_del_mount		= NULL,
+	.fs_set_root		= local_fs_set_root,
+	.fs_set_private		= local_fs_set_private,
+	.fs_add_mount		= local_add_mount,
+	.fs_del_mount		= local_del_mount,
 	.set_option		= NULL,
 	.destroy		= vz_ct_destroy,
 	.detach			= NULL,
@@ -86,7 +86,7 @@ static ct_handler_t vz_ct_create(libct_session_t s, char *name)
 	}
 
 	/*
-	 * While device might be there we still need to
+	 * While device might be there but still we need to
 	 * make sure there is real VZ support on OS level.
 	 */
 	while (retry--) {
@@ -101,7 +101,7 @@ static ct_handler_t vz_ct_create(libct_session_t s, char *name)
 	}
 
 	if (ret < 0) {
-		pr_perror("The kernel doesn't support VZ "
+		pr_perror("The kernel looks like don't supporting VZ "
 			  "(or VZ module is not loaded)");
 		goto err;
 	}
