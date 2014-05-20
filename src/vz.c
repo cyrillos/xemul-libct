@@ -73,6 +73,7 @@ static ct_handler_t vz_ct_create(libct_session_t s, char *name)
 		goto err;
 
 	vz->veid = 0;
+	vz->vzfd = -1;
 
 	/*
 	 * All communications come through special VZ
@@ -102,16 +103,15 @@ static ct_handler_t vz_ct_create(libct_session_t s, char *name)
 	if (ret < 0) {
 		pr_perror("The kernel doesn't support VZ "
 			  "(or VZ module is not loaded)");
-		goto err_close;
+		goto err;
 	}
 
 	vz->ct.h.ops = &vz_ct_ops;
 	return &vz->ct.h;
 
-err_close:
-	close(vz->vzfd);
 err:
-	xfree(vz);
+	if (vz)
+		vz_ct_destroy(&vz->ct.h);
 	return NULL;
 }
 
