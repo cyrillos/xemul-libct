@@ -4,6 +4,8 @@
 #include <sys/ioctl.h>
 #include "types.h"
 
+#define VZCTLDEV		"/dev/vzctl"
+
 #define VE_CREATE		 1	/* Create VE, VE_ENTER added automatically */
 #define VE_EXCLUSIVE		 2	/* Fail if exists */
 #define VE_ENTER		 4	/* Enter existing VE */
@@ -92,15 +94,15 @@ struct env_create_param3 {
 	u64			known_features;
 };
 
-#define VE_FEATURE_SYSFS	(1ULL << 0)
-#define VE_FEATURE_NFS		(1ULL << 1)
-#define VE_FEATURE_DEF_PERMS	(1ULL << 2)
-#define VE_FEATURE_SIT          (1ULL << 3)
-#define VE_FEATURE_IPIP         (1ULL << 4)
-#define VE_FEATURE_PPP		(1ULL << 5)
-#define VE_FEATURE_IPGRE	(1ULL << 6)
-#define VE_FEATURE_BRIDGE	(1ULL << 7)
-#define VE_FEATURE_NFSD		(1ULL << 8)
+#define VE_FEATURE_SYSFS	(1ull << 0)
+#define VE_FEATURE_NFS		(1ull << 1)
+#define VE_FEATURE_DEF_PERMS	(1ull << 2)
+#define VE_FEATURE_SIT          (1ull << 3)
+#define VE_FEATURE_IPIP         (1ull << 4)
+#define VE_FEATURE_PPP		(1ull << 5)
+#define VE_FEATURE_IPGRE	(1ull << 6)
+#define VE_FEATURE_BRIDGE	(1ull << 7)
+#define VE_FEATURE_NFSD		(1ull << 8)
 
 #define VE_FEATURES_OLD		(VE_FEATURE_SYSFS)
 #define VE_FEATURES_DEF		(VE_FEATURE_SYSFS | VE_FEATURE_DEF_PERMS)

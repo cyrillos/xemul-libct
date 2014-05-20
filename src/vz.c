@@ -1,4 +1,9 @@
 #include <stdio.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+
+#include <sys/ioctl.h>
 
 #include "compiler.h"
 
@@ -10,10 +15,11 @@
 
 #include "vz.h"
 
-
 typedef struct {
 	struct container	ct;
-	void			*private;
+
+	int			vzfd;
+	envid_t			veid;
 } vz_container_t;
 
 static vz_container_t *cth2vz(ct_handler_t h)
@@ -26,6 +32,8 @@ static void vz_ct_destroy(ct_handler_t h)
 {
 	vz_container_t *vz = cth2vz(h);
 
+	if (vz->vzfd >= 0)
+		close(vz->vzfd);
 	xfree(vz->ct.name);
 	xfree(vz);
 }
@@ -56,14 +64,53 @@ static const struct container_ops vz_ct_ops = {
 
 static ct_handler_t vz_ct_create(libct_session_t s, char *name)
 {
+	struct vzctl_env_create env_create = { };
 	vz_container_t *vz;
+	int ret, retry = 3;
 
 	vz = xmalloc(sizeof(*vz));
-	if (vz && ct_init(&vz->ct, name)) {
-		vz->ct.h.ops = &vz_ct_ops;
-		return &vz->ct.h;
+	if (!vz || ct_init(&vz->ct, name))
+		goto err;
+
+	vz->veid = 0;
+
+	/*
+	 * All communications come through special VZ
+	 * module device.
+	 */
+	vz->vzfd = open(VZCTLDEV, O_RDWR);
+	if (vz->vzfd < 0) {
+		pr_perror("Can't open %s", VZCTLDEV);
+		goto err;
 	}
 
+	/*
+	 * While device might be there we still need to
+	 * make sure there is real VZ support on OS level.
+	 */
+	while (retry--) {
+		ret = ioctl(vz->vzfd, VZCTL_ENV_CREATE, &env_create);
+		if (ret < 0) {
+			if (errno == EBUSY) {
+				sleep(1);
+				continue;
+			}
+		}
+		break;
+	}
+
+	if (ret < 0) {
+		pr_perror("The kernel doesn't support VZ "
+			  "(or VZ module is not loaded)");
+		goto err_close;
+	}
+
+	vz->ct.h.ops = &vz_ct_ops;
+	return &vz->ct.h;
+
+err_close:
+	close(vz->vzfd);
+err:
 	xfree(vz);
 	return NULL;
 }
