@@ -15,7 +15,7 @@ obj-y			+= libnetlink.o
 obj-y			+= pb-unix.o
 obj-y			+= rpc.o
 
-obj-y			+= backend-openvz.o
+obj-y			+= vz.o
 
 #
 # We need protobuf

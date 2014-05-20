@@ -8,7 +8,7 @@
 #include "session.h"
 #include "libct.h"
 
-#include "backend-openvz.h"
+#include "vz.h"
 
 
 typedef struct {
