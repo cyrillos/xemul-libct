@@ -71,7 +71,14 @@ static int vz_ioctl_env_create(vz_container_t *vzct, envid_t veid, int flags)
 
 static enum ct_state vz_ct_get_state(ct_handler_t h)
 {
-	return cth2vz(h)->ct.state;
+	vz_container_t *vzct = cth2vz(h);
+
+	/*
+	 * When VE is running it must report so, don't
+	 * rely on internal container 'state' we're tracking
+	 * in container::state.
+	 */
+	return vz_ioctl_env_create(vzct, vzct->veid, VE_TEST) == 0 ? CT_RUNNING : CT_STOPPED;
 }
 
 static void vz_ct_destroy(ct_handler_t h)
