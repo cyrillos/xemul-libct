@@ -134,6 +134,8 @@ libct_session_t libct_session_open(char *how)
 		return libct_session_open_local();
 	if (!strncmp(how, "unix://", 7))
 		return libct_session_open_pbunix(how + 7);
+	else if (!strncmp(how, "vz", 2))
+		return libct_session_open_vz();
 
 	return NULL;
 }

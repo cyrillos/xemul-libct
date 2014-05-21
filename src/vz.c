@@ -130,3 +130,21 @@ static const struct backend_ops vz_session_ops = {
 	.open_ct	= vz_ct_open,
 	.close		= vz_ct_close,
 };
+
+libct_session_t libct_session_open_vz(void)
+{
+	struct local_session *s;
+
+	if (libct_init_local())
+		return NULL;
+
+	s = xmalloc(sizeof(*s));
+	if (s) {
+		INIT_LIST_HEAD(&s->s.s_cts);
+		s->s.ops	= &vz_session_ops;
+		s->server_sk	= -1;
+		return &s->s;
+	}
+
+	return NULL;
+}
