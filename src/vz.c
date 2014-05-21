@@ -72,6 +72,8 @@ static int vz_ioctl_env_create(vz_container_t *vzct, envid_t veid, int flags)
 static enum ct_state vz_ct_get_state(ct_handler_t h)
 {
 	vz_container_t *vzct = cth2vz(h);
+	struct container *ct = cth2ct(h);
+	enum ct_state real_state;
 
 	/*
 	 * When VE is running it must report so, don't
@@ -81,8 +83,13 @@ static enum ct_state vz_ct_get_state(ct_handler_t h)
 	 * FIXME Figure out if VE states might be differen
 	 * from ones we're presening (checkpointing, migrating).
 	 */
-	return vz_ioctl_env_create(vzct, vzct->veid, VE_TEST) == 0 ?
-		CT_RUNNING : CT_STOPPED;
+	real_state = vz_ioctl_env_create(vzct, vzct->veid, VE_TEST) == 0 ? CT_RUNNING : CT_STOPPED;
+	if (real_state != ct->state) {
+		pr_err("Container %u state mismatch %u %u\n",
+			vzct->veid, real_state, ct->state);
+	}
+
+	return real_state;
 }
 
 static void vz_ct_destroy(ct_handler_t h)
