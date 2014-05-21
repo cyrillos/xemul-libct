@@ -45,6 +45,30 @@ static vz_container_t *cth2vz(ct_handler_t h)
 	return container_of(ct, vz_container_t, ct);
 }
 
+static int vz_ioctl_env_create(vz_container_t *vzct, envid_t veid, int flags)
+{
+	unsigned int retry = 3;
+	int ret = -EINVAL;
+
+	struct vzctl_env_create env_create = {
+		.veid	= veid,
+		.flags	= flags,
+	};
+
+	for (retry = 0; retry < 3; retry++) {
+		ret = ioctl(vzct->vzfd, VZCTL_ENV_CREATE, &env_create);
+		if (ret < 0) {
+			if (errno == EBUSY) {
+				sleep(1);
+				continue;
+			}
+		}
+		break;
+	}
+
+	return ret;
+}
+
 static enum ct_state vz_ct_get_state(ct_handler_t h)
 {
 	return cth2vz(h)->ct.state;
@@ -52,11 +76,11 @@ static enum ct_state vz_ct_get_state(ct_handler_t h)
 
 static void vz_ct_destroy(ct_handler_t h)
 {
-	vz_container_t *vz = cth2vz(h);
-	struct container *ct = &vz->ct;
+	vz_container_t *vzct = cth2vz(h);
+	struct container *ct = &vzct->ct;
 
-	if (vz->vzfd >= 0)
-		close(vz->vzfd);
+	if (vzct->vzfd >= 0)
+		close(vzct->vzfd);
 
 	cgroups_free(ct);
 	fs_free(ct);
@@ -65,7 +89,7 @@ static void vz_ct_destroy(ct_handler_t h)
 	xfree(ct->hostname);
 	xfree(ct->domainname);
 	xfree(ct->cgroup_sub);
-	xfree(vz);
+	xfree(vzct);
 }
 
 static const struct container_ops vz_ct_ops = {
@@ -94,23 +118,21 @@ static const struct container_ops vz_ct_ops = {
 
 static ct_handler_t vz_ct_create(libct_session_t s, char *name)
 {
-	struct vzctl_env_create env_create = { };
-	vz_container_t *vz;
-	int ret, retry = 3;
+	vz_container_t *vzct;
 
-	vz = xmalloc(sizeof(*vz));
-	if (!vz || ct_init(&vz->ct, name))
+	vzct = xmalloc(sizeof(*vzct));
+	if (!vzct || ct_init(&vzct->ct, name))
 		goto err;
 
-	vz->vzfd = -1;
+	vzct->vzfd = -1;
 
 	/*
 	 * OpenVZ doesn't support symbolic names, but all VEs
 	 * are identified by than named numeric VE id. Thus the
 	 * name here must be a VE (container) number.
 	 */
-	vz->veid = (envid_t)atol(name);
-	if (vz->veid == VZ_ENVID_SUPER) {
+	vzct->veid = (envid_t)atol(name);
+	if (vzct->veid == VZ_ENVID_SUPER) {
 		pr_err("Bad VE name %s\n", name);
 		goto err;
 	}
@@ -119,8 +141,8 @@ static ct_handler_t vz_ct_create(libct_session_t s, char *name)
 	 * All communications come through special VZ
 	 * module device.
 	 */
-	vz->vzfd = open(VZCTLDEV, O_RDWR);
-	if (vz->vzfd < 0) {
+	vzct->vzfd = open(VZCTLDEV, O_RDWR);
+	if (vzct->vzfd < 0) {
 		pr_perror("Can't open %s", VZCTLDEV);
 		goto err;
 	}
@@ -129,29 +151,18 @@ static ct_handler_t vz_ct_create(libct_session_t s, char *name)
 	 * While device might be there but still we need to
 	 * make sure there is real VZ support on OS level.
 	 */
-	while (retry--) {
-		ret = ioctl(vz->vzfd, VZCTL_ENV_CREATE, &env_create);
-		if (ret < 0) {
-			if (errno == EBUSY) {
-				sleep(1);
-				continue;
-			}
-		}
-		break;
-	}
-
-	if (ret < 0) {
+	if (vz_ioctl_env_create(vzct, 0, 0) < 0) {
 		pr_perror("The kernel looks like don't supporting VZ "
 			  "(or VZ module is not loaded)");
 		goto err;
 	}
 
-	vz->ct.h.ops = &vz_ct_ops;
-	return &vz->ct.h;
+	vzct->ct.h.ops = &vz_ct_ops;
+	return &vzct->ct.h;
 
 err:
-	if (vz)
-		vz_ct_destroy(&vz->ct.h);
+	if (vzct)
+		vz_ct_destroy(&vzct->ct.h);
 	return NULL;
 }
 
@@ -163,12 +174,12 @@ static ct_handler_t vz_ct_open(libct_session_t s, char *name)
 
 static void vz_close(libct_session_t s)
 {
-	vz_session_t *vz_ses = s2vz(s);
+	vz_session_t *vzs = s2vz(s);
 
-	if (vz_ses->server_sk >= 0)
-		close(vz_ses->server_sk);
+	if (vzs->server_sk >= 0)
+		close(vzs->server_sk);
 
-	xfree(vz_ses);
+	xfree(vzs);
 }
 
 static const struct backend_ops vz_session_ops = {
@@ -180,7 +191,7 @@ static const struct backend_ops vz_session_ops = {
 
 libct_session_t libct_session_open_vz(void)
 {
-	vz_session_t *vz_ses;
+	vz_session_t *vzs;
 
 	/*
 	 * VZ session is close to "local" ones
@@ -190,12 +201,12 @@ libct_session_t libct_session_open_vz(void)
 	if (libct_init_local())
 		return NULL;
 
-	vz_ses = xzalloc(sizeof(*vz_ses));
-	if (vz_ses) {
-		INIT_LIST_HEAD(&vz_ses->s.s_cts);
-		vz_ses->s.ops = &vz_session_ops;
-		vz_ses->server_sk = -1;
-		return &vz_ses->s;
+	vzs = xzalloc(sizeof(*vzs));
+	if (vzs) {
+		INIT_LIST_HEAD(&vzs->s.s_cts);
+		vzs->s.ops = &vz_session_ops;
+		vzs->server_sk = -1;
+		return &vzs->s;
 	}
 
 	return NULL;
