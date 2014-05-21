@@ -22,6 +22,16 @@ typedef struct {
 	envid_t			veid;
 } vz_container_t;
 
+typedef struct {
+	struct libct_session	s;
+	int			server_sk;
+} vz_session_t;
+
+static vz_session_t *s2vz(libct_session_t s)
+{
+	return container_of(s, vz_session_t, s);
+}
+
 static vz_container_t *cth2vz(ct_handler_t h)
 {
 	struct container *ct = container_of(h, struct container, h);
@@ -120,30 +130,40 @@ static ct_handler_t vz_ct_open(libct_session_t s, char *name)
 	return NULL;
 }
 
-static void vz_ct_close(libct_session_t s)
+static void vz_close(libct_session_t s)
 {
+	vz_session_t *vz_ses = s2vz(s);
+
+	if (vz_ses->server_sk >= 0)
+		close(vz_ses->server_sk);
+
+	xfree(vz_ses);
 }
 
 static const struct backend_ops vz_session_ops = {
 	.type		= BACKEND_VZ,
 	.create_ct	= vz_ct_create,
 	.open_ct	= vz_ct_open,
-	.close		= vz_ct_close,
+	.close		= vz_close,
 };
 
 libct_session_t libct_session_open_vz(void)
 {
-	struct local_session *s;
+	vz_session_t *vz_ses;
 
+	/*
+	 * VZ session is close to "local" ones
+	 * except backend operations.
+	 */
 	if (libct_init_local())
 		return NULL;
 
-	s = xmalloc(sizeof(*s));
-	if (s) {
-		INIT_LIST_HEAD(&s->s.s_cts);
-		s->s.ops	= &vz_session_ops;
-		s->server_sk	= -1;
-		return &s->s;
+	vz_ses = xzalloc(sizeof(*vz_ses));
+	if (vz_ses) {
+		INIT_LIST_HEAD(&vz_ses->s.s_cts);
+		vz_ses->s.ops = &vz_session_ops;
+		vz_ses->server_sk = -1;
+		return &vz_ses->s;
 	}
 
 	return NULL;
