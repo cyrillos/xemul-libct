@@ -38,6 +38,11 @@ static vz_container_t *cth2vz(ct_handler_t h)
 	return container_of(ct, vz_container_t, ct);
 }
 
+static enum ct_state vz_ct_get_state(ct_handler_t h)
+{
+	return cth2vz(h)->ct.state;
+}
+
 static void vz_ct_destroy(ct_handler_t h)
 {
 	vz_container_t *vz = cth2vz(h);
@@ -55,7 +60,7 @@ static const struct container_ops vz_ct_ops = {
 	.enter_execve		= NULL,
 	.kill			= NULL,
 	.wait			= NULL,
-	.get_state		= NULL,
+	.get_state		= vz_ct_get_state,
 	.set_nsmask		= NULL,
 	.add_controller		= NULL,
 	.config_controller	= NULL,
@@ -66,8 +71,8 @@ static const struct container_ops vz_ct_ops = {
 	.set_option		= NULL,
 	.destroy		= vz_ct_destroy,
 	.detach			= NULL,
-	.net_add		= NULL,
-	.net_del		= NULL,
+	.net_add		= local_net_add,
+	.net_del		= local_net_del,
 	.uname			= NULL,
 	.set_caps		= NULL,
 };
@@ -82,9 +87,14 @@ static ct_handler_t vz_ct_create(libct_session_t s, char *name)
 	if (!vz || ct_init(&vz->ct, name))
 		goto err;
 
-	vz->veid = (envid_t)atol(name);
 	vz->vzfd = -1;
 
+	/*
+	 * OpenVZ doesn't support symbolic names, but all VEs
+	 * are identified by than named numeric VE id. Thus the
+	 * name here must be a VE (container) number.
+	 */
+	vz->veid = (envid_t)atol(name);
 	if (vz->veid == VZ_ENVID_SUPER) {
 		pr_err("Bad VE name %s\n", name);
 		goto err;
@@ -132,11 +142,7 @@ err:
 
 static ct_handler_t vz_ct_open(libct_session_t s, char *name)
 {
-	/*
-	 * OpenVZ doesn't support symbolic names, but all VEs
-	 * are identified by than named numeric VE id. Thus the
-	 * name here must be a VE (container) number.
-	 */
+	/* FIXME */
 	return NULL;
 }
 
