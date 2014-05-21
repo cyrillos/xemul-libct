@@ -14,6 +14,7 @@
 #define VE_SKIPLOCK		32	/* Allow entering embrion VE */
 
 typedef unsigned int envid_t;
+#define VZ_ENVID_SUPER		0
 
 struct vzctl_old_env_create {
 	envid_t			veid;

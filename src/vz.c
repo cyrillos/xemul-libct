@@ -82,8 +82,13 @@ static ct_handler_t vz_ct_create(libct_session_t s, char *name)
 	if (!vz || ct_init(&vz->ct, name))
 		goto err;
 
-	vz->veid = 0;
+	vz->veid = (envid_t)atol(name);
 	vz->vzfd = -1;
+
+	if (vz->veid == VZ_ENVID_SUPER) {
+		pr_err("Bad VE name %s\n", name);
+		goto err;
+	}
 
 	/*
 	 * All communications come through special VZ
@@ -127,6 +132,11 @@ err:
 
 static ct_handler_t vz_ct_open(libct_session_t s, char *name)
 {
+	/*
+	 * OpenVZ doesn't support symbolic names, but all VEs
+	 * are identified by than named numeric VE id. Thus the
+	 * name here must be a VE (container) number.
+	 */
 	return NULL;
 }
 
@@ -153,7 +163,8 @@ libct_session_t libct_session_open_vz(void)
 
 	/*
 	 * VZ session is close to "local" ones
-	 * except backend operations.
+	 * and we need some features which are
+	 * initialized here for own needs.
 	 */
 	if (libct_init_local())
 		return NULL;
