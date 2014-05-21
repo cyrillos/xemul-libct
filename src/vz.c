@@ -77,8 +77,12 @@ static enum ct_state vz_ct_get_state(ct_handler_t h)
 	 * When VE is running it must report so, don't
 	 * rely on internal container 'state' we're tracking
 	 * in container::state.
+	 *
+	 * FIXME Figure out if VE states might be differen
+	 * from ones we're presening (checkpointing, migrating).
 	 */
-	return vz_ioctl_env_create(vzct, vzct->veid, VE_TEST) == 0 ? CT_RUNNING : CT_STOPPED;
+	return vz_ioctl_env_create(vzct, vzct->veid, VE_TEST) == 0 ?
+		CT_RUNNING : CT_STOPPED;
 }
 
 static void vz_ct_destroy(ct_handler_t h)
