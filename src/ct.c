@@ -446,7 +446,7 @@ static int local_ct_wait(ct_handler_t h)
 	return 0;
 }
 
-static int local_set_option(ct_handler_t h, int opt, va_list parms)
+int local_set_option(ct_handler_t h, int opt, va_list parms)
 {
 	int ret = LCTERR_BADTYPE;
 	struct container *ct = cth2ct(h);
