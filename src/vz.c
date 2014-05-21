@@ -86,6 +86,16 @@ static void vz_ct_destroy(ct_handler_t h)
 	vz_container_t *vzct = cth2vz(h);
 	struct container *ct = &vzct->ct;
 
+	/*
+	 * Try to stop it if it's running first.
+	 */
+	if (vz_ct_get_state(h) == CT_RUNNING) {
+		char *argv[] = {"halt", NULL};
+		char *env[] = { NULL};
+
+		vzct->ct.h.ops->enter_execve(h, argv[0], argv, env);
+	}
+
 	if (vzct->vzfd >= 0)
 		close(vzct->vzfd);
 
