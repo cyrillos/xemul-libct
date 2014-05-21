@@ -100,16 +100,16 @@ static inline struct container *cth2ct(struct ct_handler *h)
 	return container_of(h, struct container, h);
 }
 
-extern char *local_ct_name(ct_handler_t h);
-extern int local_set_nsmask(ct_handler_t h, unsigned long nsmask);
-extern int local_add_controller(ct_handler_t h, enum ct_controller ctype);
-int local_set_option(ct_handler_t h, int opt, va_list parms);
-
 static inline bool fs_private(struct container *ct)
 {
 	return /* FIXME ct->root_path || */ (ct->nsmask & CLONE_NEWNS);
 }
 
 extern void ct_handler_init(ct_handler_t h);
+extern char *local_ct_name(ct_handler_t h);
+extern int local_set_nsmask(ct_handler_t h, unsigned long nsmask);
+extern int local_add_controller(ct_handler_t h, enum ct_controller ctype);
+extern int local_set_option(ct_handler_t h, int opt, va_list parms);
+extern int local_uname(ct_handler_t h, char *host, char *dom);
 
 #endif /* __LIBCT_CT_H__ */

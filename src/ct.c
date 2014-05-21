@@ -472,7 +472,7 @@ int local_set_option(ct_handler_t h, int opt, va_list parms)
 	return ret;
 }
 
-static int local_uname(ct_handler_t h, char *host, char *dom)
+int local_uname(ct_handler_t h, char *host, char *dom)
 {
 	struct container *ct = cth2ct(h);
 

@@ -88,7 +88,7 @@ static const struct container_ops vz_ct_ops = {
 	.detach			= vz_ct_destroy,
 	.net_add		= local_net_add,
 	.net_del		= local_net_del,
-	.uname			= NULL,
+	.uname			= local_uname,
 	.set_caps		= NULL,
 };
 
