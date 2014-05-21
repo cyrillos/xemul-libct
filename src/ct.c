@@ -500,7 +500,7 @@ int local_uname(ct_handler_t h, char *host, char *dom)
 	return 0;
 }
 
-static int local_set_caps(ct_handler_t h, unsigned long mask, unsigned int apply_to)
+int local_set_caps(ct_handler_t h, unsigned long mask, unsigned int apply_to)
 {
 	struct container *ct = cth2ct(h);
 

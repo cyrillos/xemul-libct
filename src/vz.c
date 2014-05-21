@@ -89,7 +89,7 @@ static const struct container_ops vz_ct_ops = {
 	.net_add		= local_net_add,
 	.net_del		= local_net_del,
 	.uname			= local_uname,
-	.set_caps		= NULL,
+	.set_caps		= local_set_caps,
 };
 
 static ct_handler_t vz_ct_create(libct_session_t s, char *name)

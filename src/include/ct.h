@@ -111,5 +111,6 @@ extern int local_set_nsmask(ct_handler_t h, unsigned long nsmask);
 extern int local_add_controller(ct_handler_t h, enum ct_controller ctype);
 extern int local_set_option(ct_handler_t h, int opt, va_list parms);
 extern int local_uname(ct_handler_t h, char *host, char *dom);
+extern int local_set_caps(ct_handler_t h, unsigned long mask, unsigned int apply_to);
 
 #endif /* __LIBCT_CT_H__ */
