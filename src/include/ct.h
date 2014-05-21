@@ -107,6 +107,7 @@ static inline bool fs_private(struct container *ct)
 
 extern void ct_handler_init(ct_handler_t h);
 extern char *local_ct_name(ct_handler_t h);
+extern int local_ct_kill(ct_handler_t h);
 extern int local_set_nsmask(ct_handler_t h, unsigned long nsmask);
 extern int local_add_controller(ct_handler_t h, enum ct_controller ctype);
 extern int local_set_option(ct_handler_t h, int opt, va_list parms);

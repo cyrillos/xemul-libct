@@ -85,8 +85,13 @@ static enum ct_state vz_ct_get_state(ct_handler_t h)
 	 */
 	real_state = vz_ioctl_env_create(vzct, vzct->veid, VE_TEST) == 0 ? CT_RUNNING : CT_STOPPED;
 	if (real_state != ct->state) {
-		pr_err("Container %u state mismatch %u %u\n",
-			vzct->veid, real_state, ct->state);
+		/*
+		 * Someone is playing with container outside
+		 * of us, we can't guarantee data consistency.
+		 */
+		pr_err_once("Container %u state mismatch %u %u\n",
+			    vzct->veid, real_state, ct->state);
+		return -EINVAL;
 	}
 
 	return real_state;
@@ -125,7 +130,7 @@ static const struct container_ops vz_ct_ops = {
 	.spawn_execve		= NULL,
 	.enter_cb		= NULL,
 	.enter_execve		= NULL,
-	.kill			= NULL,
+	.kill			= local_ct_kill,
 	.wait			= NULL,
 	.get_state		= vz_ct_get_state,
 	.set_nsmask		= local_set_nsmask,
