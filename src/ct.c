@@ -43,7 +43,7 @@ static void local_ct_destroy(ct_handler_t h)
 	xfree(ct);
 }
 
-static int local_set_nsmask(ct_handler_t h, unsigned long nsmask)
+int local_set_nsmask(ct_handler_t h, unsigned long nsmask)
 {
 	struct container *ct = cth2ct(h);
 
