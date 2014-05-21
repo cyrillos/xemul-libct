@@ -11,7 +11,14 @@
 
 #include "xmalloc.h"
 #include "session.h"
+#include "cgroups.h"
+#include "security.h"
 #include "libct.h"
+#include "list.h"
+#include "util.h"
+#include "net.h"
+#include "ct.h"
+#include "fs.h"
 
 #include "vz.h"
 
@@ -46,10 +53,18 @@ static enum ct_state vz_ct_get_state(ct_handler_t h)
 static void vz_ct_destroy(ct_handler_t h)
 {
 	vz_container_t *vz = cth2vz(h);
+	struct container *ct = &vz->ct;
 
 	if (vz->vzfd >= 0)
 		close(vz->vzfd);
-	xfree(vz->ct.name);
+
+	cgroups_free(ct);
+	fs_free(ct);
+	net_release(ct);
+	xfree(ct->name);
+	xfree(ct->hostname);
+	xfree(ct->domainname);
+	xfree(ct->cgroup_sub);
 	xfree(vz);
 }
 
